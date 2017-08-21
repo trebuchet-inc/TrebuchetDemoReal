@@ -179,6 +179,34 @@ BoxCollider:
   serializedVersion: 2
   m_Size: {x: 13, y: 1, z: 13}
   m_Center: {x: 0, y: -0.5, z: 0}
+--- !u!1 &648021144
+GameObject:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  serializedVersion: 5
+  m_Component:
+  - component: {fileID: 648021145}
+  m_Layer: 0
+  m_Name: InterractionPoint
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &648021145
+Transform:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 648021144}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: -0.25}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 2035263406}
+  m_RootOrder: 3
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &962942019
 Prefab:
   m_ObjectHideFlags: 0
@@ -192,7 +220,7 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 4024871868913698, guid: 7cbf2fb37c9d2f947a1b3102ff873f8b, type: 2}
       propertyPath: m_LocalPosition.y
-      value: 0
+      value: -0.1
       objectReference: {fileID: 0}
     - target: {fileID: 4024871868913698, guid: 7cbf2fb37c9d2f947a1b3102ff873f8b, type: 2}
       propertyPath: m_LocalPosition.z
@@ -491,6 +519,28 @@ Prefab:
       propertyPath: AllowTwoHanded
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 4456002859563730, guid: 0d25466df49c5eb4bae86be8c40f75f7, type: 2}
+      propertyPath: m_LocalScale.z
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 4456002859563730, guid: 0d25466df49c5eb4bae86be8c40f75f7, type: 2}
+      propertyPath: m_LocalScale.y
+      value: 0.2
+      objectReference: {fileID: 0}
+    - target: {fileID: 4456002859563730, guid: 0d25466df49c5eb4bae86be8c40f75f7, type: 2}
+      propertyPath: m_LocalScale.x
+      value: 0.2
+      objectReference: {fileID: 0}
+    - target: {fileID: 114102562116633394, guid: 0d25466df49c5eb4bae86be8c40f75f7,
+        type: 2}
+      propertyPath: InteractionPoint
+      value: 
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: 0d25466df49c5eb4bae86be8c40f75f7, type: 2}
   m_IsPrefabParent: 0
+--- !u!4 &2035263406 stripped
+Transform:
+  m_PrefabParentObject: {fileID: 4456002859563730, guid: 0d25466df49c5eb4bae86be8c40f75f7,
+    type: 2}
+  m_PrefabInternal: {fileID: 1903879892}

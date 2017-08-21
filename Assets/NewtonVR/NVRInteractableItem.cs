@@ -38,6 +38,8 @@ namespace NewtonVR
 
         protected Dictionary<Collider, PhysicMaterial> MaterialCache = new Dictionary<Collider, PhysicMaterial>();
 
+        protected Transform TwoHandedInteractionPoint;
+
         protected override void Awake()
         {
             base.Awake();
@@ -47,7 +49,7 @@ namespace NewtonVR
 
         protected override void Start()
         {
-            base.Start();
+            base.Start();     
 
             if (NVRPlayer.Instance.VelocityHistorySteps > 0)
             {
@@ -87,11 +89,45 @@ namespace NewtonVR
                 }
                 else
                 {
-                    targetItemPosition = this.transform.position;
+                    targetItemPosition = PickupTransforms[hand].position;;
+                    targetItemRotation = PickupTransforms[hand].rotation;
+
+                    targetHandPosition = hand.transform.position;
+                    targetHandRotation = hand.transform.rotation;
+                }
+            }
+            else if (AttachedHands.Count == 2)
+            {
+                if (InteractionPoint != null)
+                {
+                    targetItemPosition = InteractionPoint.position;
+                    targetItemRotation = InteractionPoint.rotation;
+
+                    targetHandPosition = AttachedHands[0].transform.position;
+                    targetHandRotation = Quaternion.LookRotation(AttachedHands[1].transform.position - AttachedHands[0].transform.position, Vector3.up);
+                }
+                else
+                {
+                    NVRHand mainHand;
+                    NVRHand secondHand;
+
+                    if(Vector3.Distance(AttachedHands[0].transform.position, transform.position) >= Vector3.Distance(AttachedHands[1].transform.position, transform.position))
+                    {
+                        mainHand = AttachedHands[0];
+                        secondHand = AttachedHands[1];
+                    }
+                    else 
+                    {
+                        mainHand = AttachedHands[1];
+                        secondHand = AttachedHands[0];
+                    }
+
+                    targetItemPosition = PickupTransforms[mainHand].position;
                     targetItemRotation = this.transform.rotation;
 
-                    targetHandPosition = PickupTransforms[hand].position;
-                    targetHandRotation = PickupTransforms[hand].rotation;
+                    targetHandPosition = mainHand.transform.position; 
+                    if(PickupTransforms[mainHand].localPosition.z <= 0) targetHandRotation = Quaternion.LookRotation(secondHand.transform.position - mainHand.transform.position, Vector3.up);
+                    else targetHandRotation = Quaternion.LookRotation(mainHand.transform.position - secondHand.transform.position, Vector3.up);
                 }
             }
             else
@@ -99,7 +135,6 @@ namespace NewtonVR
                 Vector3 cumulativeItemVector = Vector3.zero;
                 Vector4 cumulativeItemRotation = Vector4.zero;
                 Quaternion? firstItemRotation = null;
-                Vector3? firsHandPosition = null;
                 targetItemRotation = Quaternion.identity;
 
                 Vector3 cumulativeHandVector = Vector3.zero;
@@ -128,10 +163,6 @@ namespace NewtonVR
                         cumulativeHandVector += PickupTransforms[hand].position;
                     }
 
-                    if(firsHandPosition == null)
-                    {
-                        firsHandPosition = PickupTransforms[hand].position;
-                    }
                     if (firstItemRotation == null)
                     {
                         firstItemRotation = targetItemRotation;
@@ -141,11 +172,9 @@ namespace NewtonVR
                         firstHandRotation = targetHandRotation;
                     }
                 }
-
                 targetItemPosition = cumulativeItemVector / AttachedHands.Count;
                 targetHandPosition = cumulativeHandVector / AttachedHands.Count;
-                targetItemRotation = Quaternion.LookRotation(targetHandPosition - targetItemPosition, Vector3.up);
-                //targetItemRotation = NVRHelpers.AverageQuaternion(ref cumulativeItemRotation, targetItemRotation, firstItemRotation.Value, AttachedHands.Count);
+                targetItemRotation = NVRHelpers.AverageQuaternion(ref cumulativeItemRotation, targetItemRotation, firstItemRotation.Value, AttachedHands.Count);
                 targetHandRotation = NVRHelpers.AverageQuaternion(ref cumulativeHandRotation, targetHandRotation, firstHandRotation.Value, AttachedHands.Count);
             }
         }
@@ -171,21 +200,16 @@ namespace NewtonVR
             Vector3 axis;
 
             positionDelta = (targetHandPosition - targetItemPosition);
+
             rotationDelta = targetHandRotation * Quaternion.Inverse(targetItemRotation);
-
-
-            Vector3 velocityTarget = (positionDelta * velocityMagic) * Time.deltaTime;
-            if (float.IsNaN(velocityTarget.x) == false)
-            {
-                this.Rigidbody.velocity = Vector3.MoveTowards(this.Rigidbody.velocity, velocityTarget, MaxVelocityChange);
-            }
-
 
             rotationDelta.ToAngleAxis(out angle, out axis);
 
             if (angle > 180)
+            {
                 angle -= 360;
-
+            }
+                
             if (angle != 0)
             {
                 Vector3 angularTarget = angle * axis;
@@ -196,7 +220,12 @@ namespace NewtonVR
                 }
             }
 
-
+            Vector3 velocityTarget = (positionDelta * velocityMagic) * Time.deltaTime;
+            if (float.IsNaN(velocityTarget.x) == false)
+            {
+                this.Rigidbody.velocity = Vector3.MoveTowards(this.Rigidbody.velocity, velocityTarget, MaxVelocityChange);
+            }
+            
             if (VelocityHistory != null)
             {
                 CurrentVelocityHistoryStep++;
@@ -261,10 +290,19 @@ namespace NewtonVR
             DisablePhysicalMaterials();
 
             Transform pickupTransform = new GameObject(string.Format("[{0}] NVRPickupTransform", this.gameObject.name)).transform;
-            pickupTransform.parent = hand.transform;
-            pickupTransform.position = this.transform.position;
-            pickupTransform.rotation = this.transform.rotation;
+            pickupTransform.parent = this.transform;
+            pickupTransform.position = hand.transform.position;
+            pickupTransform.rotation = hand.transform.rotation;
             PickupTransforms.Add(hand, pickupTransform);
+
+            // if(AllowTwoHanded && TwoHandedInteractionPoint == null)
+            // {
+            //     Transform interractionTransform = new GameObject(string.Format("TwoHandedInteractionPoint")).transform;
+            //     interractionTransform.parent = this.transform;
+            //     interractionTransform.position = hand.transform.position;
+            //     interractionTransform.rotation = this.transform.rotation;
+            //     TwoHandedInteractionPoint = interractionTransform;
+            // }
 
             ResetVelocityHistory();
 
@@ -297,6 +335,8 @@ namespace NewtonVR
                 Destroy(PickupTransforms[hand].gameObject);
                 PickupTransforms.Remove(hand);
             }
+
+            //if(TwoHandedInteractionPoint != null) Destroy(TwoHandedInteractionPoint.gameObject);
 
             if (PickupTransforms.Count == 0)
             {
