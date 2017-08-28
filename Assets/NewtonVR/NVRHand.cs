@@ -9,17 +9,18 @@ namespace NewtonVR
 {
     public class NVRHand : MonoBehaviour
     {
-        public NVRButtons HoldButton = NVRButtons.Grip;
+        public NVRButtons HoldButton = NVRButtons.Trigger;
         public bool HoldButtonDown { get { return Inputs[HoldButton].PressDown; } }
         public bool HoldButtonUp { get { return Inputs[HoldButton].PressUp; } }
         public bool HoldButtonPressed { get { return Inputs[HoldButton].IsPressed; } }
         public float HoldButtonAxis { get { return Inputs[HoldButton].SingleAxis; } }
 
-        public NVRButtons UseButton = NVRButtons.Trigger;
+        public NVRButtons UseButton = NVRButtons.Touchpad;
         public bool UseButtonDown { get { return Inputs[UseButton].PressDown; } }
         public bool UseButtonUp { get { return Inputs[UseButton].PressUp; } }
         public bool UseButtonPressed { get { return Inputs[UseButton].IsPressed; } }
         public float UseButtonAxis { get { return Inputs[UseButton].SingleAxis; } }
+        public Vector2 UseButtonAxisVector { get { return Inputs[UseButton].Axis; } }
 
         [HideInInspector]
         public bool IsRight;
@@ -27,6 +28,9 @@ namespace NewtonVR
         public bool IsLeft;
         [HideInInspector]
         public NVRPlayer Player;
+
+        [HideInInspector]
+        public NVRAimComponent AimComponent;
 
         public Dictionary<NVRButtons, NVRButtonInputs> Inputs;
 
@@ -138,6 +142,8 @@ namespace NewtonVR
         public virtual void PreInitialize(NVRPlayer player)
         {
             Player = player;
+
+            AimComponent = GetComponent<NVRAimComponent>();
 
             IsRight = Player.RightHand == this;
             IsLeft = Player.LeftHand == this;
