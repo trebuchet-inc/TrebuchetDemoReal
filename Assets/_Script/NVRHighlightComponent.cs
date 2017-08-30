@@ -9,7 +9,7 @@ public class NVRHighlightComponent : MonoBehaviour {
 	bool _isShowing;
 
 	void Start () {
-		GetComponent<NVRInteractableItem>().OnHovering.AddListener(show);
+		GetComponent<NVRInteractable>().OnHovering.AddListener(show);
 		FindHighlight();
 	}
 

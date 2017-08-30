@@ -19,8 +19,6 @@ namespace NewtonVR
         public UnityEvent OnUseButtonDown;
         public UnityEvent OnUseButtonUp;
 
-        public UnityEvent OnHovering;
-
         public UnityEvent OnBeginInteraction;
         public UnityEvent OnEndInteraction;
 
@@ -295,15 +293,6 @@ namespace NewtonVR
             pickupTransform.rotation = hand.transform.rotation;
             PickupTransforms.Add(hand, pickupTransform);
 
-            // if(AllowTwoHanded && TwoHandedInteractionPoint == null)
-            // {
-            //     Transform interractionTransform = new GameObject(string.Format("TwoHandedInteractionPoint")).transform;
-            //     interractionTransform.parent = this.transform;
-            //     interractionTransform.position = hand.transform.position;
-            //     interractionTransform.rotation = this.transform.rotation;
-            //     TwoHandedInteractionPoint = interractionTransform;
-            // }
-
             ResetVelocityHistory();
 
             if (OnBeginInteraction != null)
@@ -336,8 +325,6 @@ namespace NewtonVR
                 PickupTransforms.Remove(hand);
             }
 
-            //if(TwoHandedInteractionPoint != null) Destroy(TwoHandedInteractionPoint.gameObject);
-
             if (PickupTransforms.Count == 0)
             {
                 Rigidbody.drag = StartingDrag;
@@ -358,11 +345,6 @@ namespace NewtonVR
         public override void HoveringUpdate(NVRHand hand, float forTime)
         {
             base.HoveringUpdate(hand, forTime);
-
-            if (OnHovering != null)
-            {
-                OnHovering.Invoke();
-            }
         }
 
         public override void ResetInteractable()

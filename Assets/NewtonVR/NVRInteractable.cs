@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using UnityEngine.Events;
 
 namespace NewtonVR
 {
@@ -33,7 +34,7 @@ namespace NewtonVR
         protected Collider[] Colliders = new Collider[0];
         protected Vector3 ClosestHeldPoint;
 
-        
+        public UnityEvent OnHovering;
 
         public virtual bool IsAttached
         {
@@ -136,7 +137,10 @@ namespace NewtonVR
 
         public virtual void HoveringUpdate(NVRHand hand, float forTime)
         {
-
+            if (OnHovering != null)
+            {
+                OnHovering.Invoke();
+            }
         }
 
         public void ForceDetach(NVRHand hand = null)

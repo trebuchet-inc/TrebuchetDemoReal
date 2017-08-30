@@ -4,6 +4,10 @@ using UnityEngine;
 using NewtonVR;
 
 public class MeubleAgent : MonoBehaviour {
+	public LayerMask physicalLayer;
+	public Vector2 anchor;
+	public float baseY = 0;
+
 	NVRInteractableItem _obj;
 	RaycastHit _hit;
 	GameObject _highlightMeuble;
@@ -11,10 +15,6 @@ public class MeubleAgent : MonoBehaviour {
 	Vector3 _targetPosition;
 	float _deltaY;
 	bool _isShowingHL;
-
-	public LayerMask physicalLayer;
-	public Vector2 anchor;
-	public float baseY = 0;
 	
 	void Start () 
 	{
