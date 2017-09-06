@@ -7,7 +7,7 @@ namespace NewtonVR
 {
     public abstract class NVRInteractable : MonoBehaviour
     {
-        public Rigidbody Rigidbody;
+        public Rigidbody rigidbody;
 
         public bool CanAttach = true;
 
@@ -46,10 +46,10 @@ namespace NewtonVR
 
         protected virtual void Awake()
         {   
-            if (Rigidbody == null)
-                Rigidbody = this.GetComponent<Rigidbody>();
+            if (rigidbody == null)
+                rigidbody = this.GetComponent<Rigidbody>();
 
-            if (Rigidbody == null)
+            if (rigidbody == null)
             {
                 Debug.LogError("There is no rigidbody attached to this interactable.");
             }
@@ -118,7 +118,7 @@ namespace NewtonVR
 
             if (DisableKinematicOnAttach == true)
             {
-                Rigidbody.isKinematic = false;
+                rigidbody.isKinematic = false;
             }
         }
 
@@ -167,12 +167,12 @@ namespace NewtonVR
 
             if (EnableKinematicOnDetach == true)
             {
-                Rigidbody.isKinematic = true;
+                rigidbody.isKinematic = true;
             }
 
             if (EnableGravityOnDetach == true)
             {
-                Rigidbody.useGravity = true;
+                rigidbody.useGravity = true;
             }
         }
 
@@ -194,12 +194,12 @@ namespace NewtonVR
 
         public virtual void AddExternalVelocity(Vector3 velocity)
         {
-            Rigidbody.AddForce(velocity, ForceMode.VelocityChange);
+            rigidbody.AddForce(velocity, ForceMode.VelocityChange);
         }
 
         public virtual void AddExternalAngularVelocity(Vector3 angularVelocity)
         {
-            Rigidbody.AddTorque(angularVelocity, ForceMode.VelocityChange);
+            rigidbody.AddTorque(angularVelocity, ForceMode.VelocityChange);
         }
 
         protected virtual void OnDestroy()

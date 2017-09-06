@@ -42,7 +42,7 @@ namespace NewtonVR
         {
             base.Awake();
 
-            this.Rigidbody.maxAngularVelocity = 100f;
+            this.rigidbody.maxAngularVelocity = 100f;
         }
 
         protected override void Start()
@@ -214,14 +214,14 @@ namespace NewtonVR
                 if (float.IsNaN(angularTarget.x) == false)
                 {
                     angularTarget = (angularTarget * angularVelocityMagic) * Time.deltaTime;
-                    this.Rigidbody.angularVelocity = Vector3.MoveTowards(this.Rigidbody.angularVelocity, angularTarget, MaxAngularVelocityChange);
+                    this.rigidbody.angularVelocity = Vector3.MoveTowards(this.rigidbody.angularVelocity, angularTarget, MaxAngularVelocityChange);
                 }
             }
 
             Vector3 velocityTarget = (positionDelta * velocityMagic) * Time.deltaTime;
             if (float.IsNaN(velocityTarget.x) == false)
             {
-                this.Rigidbody.velocity = Vector3.MoveTowards(this.Rigidbody.velocity, velocityTarget, MaxVelocityChange);
+                this.rigidbody.velocity = Vector3.MoveTowards(this.rigidbody.velocity, velocityTarget, MaxVelocityChange);
             }
             
             if (VelocityHistory != null)
@@ -232,8 +232,8 @@ namespace NewtonVR
                     CurrentVelocityHistoryStep = 0;
                 }
 
-                VelocityHistory[CurrentVelocityHistoryStep] = this.Rigidbody.velocity;
-                AngularVelocityHistory[CurrentVelocityHistoryStep] = this.Rigidbody.angularVelocity;
+                VelocityHistory[CurrentVelocityHistoryStep] = this.rigidbody.velocity;
+                AngularVelocityHistory[CurrentVelocityHistoryStep] = this.rigidbody.angularVelocity;
             }
         }
 
@@ -241,13 +241,13 @@ namespace NewtonVR
         {
             if (ExternalVelocity != Vector3.zero)
             {
-                this.Rigidbody.velocity = Vector3.Lerp(this.Rigidbody.velocity, ExternalVelocity, 0.5f);
+                this.rigidbody.velocity = Vector3.Lerp(this.rigidbody.velocity, ExternalVelocity, 0.5f);
                 ExternalVelocity = Vector3.zero;
             }
 
             if (ExternalAngularVelocity != Vector3.zero)
             {
-                this.Rigidbody.angularVelocity = Vector3.Lerp(this.Rigidbody.angularVelocity, ExternalAngularVelocity, 0.5f);
+                this.rigidbody.angularVelocity = Vector3.Lerp(this.rigidbody.angularVelocity, ExternalAngularVelocity, 0.5f);
                 ExternalAngularVelocity = Vector3.zero;
             }
         }
@@ -280,10 +280,10 @@ namespace NewtonVR
         {
             base.BeginInteraction(hand);
 
-            StartingDrag = Rigidbody.drag;
-            StartingAngularDrag = Rigidbody.angularDrag;
-            Rigidbody.drag = 0;
-            Rigidbody.angularDrag = 0.05f;
+            StartingDrag = rigidbody.drag;
+            StartingAngularDrag = rigidbody.angularDrag;
+            rigidbody.drag = 0;
+            rigidbody.angularDrag = 0.05f;
 
             DisablePhysicalMaterials();
 
@@ -327,8 +327,8 @@ namespace NewtonVR
 
             if (PickupTransforms.Count == 0)
             {
-                Rigidbody.drag = StartingDrag;
-                Rigidbody.angularDrag = StartingAngularDrag;
+                rigidbody.drag = StartingDrag;
+                rigidbody.angularDrag = StartingAngularDrag;
 
                 EnablePhysicalMaterials();
 
@@ -380,13 +380,13 @@ namespace NewtonVR
                 Vector3? meanVelocity = GetMeanVector(VelocityHistory);
                 if (meanVelocity != null)
                 {
-                    this.Rigidbody.velocity = meanVelocity.Value;
+                    this.rigidbody.velocity = meanVelocity.Value;
                 }
 
                 Vector3? meanAngularVelocity = GetMeanVector(AngularVelocityHistory);
                 if (meanAngularVelocity != null)
                 {
-                    this.Rigidbody.angularVelocity = meanAngularVelocity.Value;
+                    this.rigidbody.angularVelocity = meanAngularVelocity.Value;
                 }
             }
         }
