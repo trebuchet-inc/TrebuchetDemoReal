@@ -190,6 +190,28 @@ namespace NewtonVR
                     }
                 }
             }
+            else if (Player.CurrentIntegrationType == NVRSDKIntegrations.WindowsMR)
+            {
+                InputDevice = this.gameObject.AddComponent<NVRWindowsMRInputDevice>();
+
+                if (Player.OverrideWinMR == true)
+                {
+                    if (IsLeft)
+                    {
+                        CustomModel = Player.OverrideWinMRLeftHand;
+                        CustomPhysicalColliders = Player.OverrideWinMRLeftHandPhysicalColliders;
+                    }
+                    else if (IsRight)
+                    {
+                        CustomModel = Player.OverrideWinMRRightHand;
+                        CustomPhysicalColliders = Player.OverrideWinMRRightHandPhysicalColliders;
+                    }
+                    else
+                    {
+                        Debug.LogError("[NewtonVR] Error: Unknown hand for SteamVR model override.");
+                    }
+                }
+            }
             else if (Player.CurrentIntegrationType == NVRSDKIntegrations.SteamVR)
             {
                 InputDevice = this.gameObject.AddComponent<NVRSteamVRInputDevice>();
@@ -683,9 +705,9 @@ namespace NewtonVR
             return InputDevice.SetupDefaultPhysicalColliders(ModelParent);
         }
 
-        public void DeregisterInteractable(NVRInteractable interactable)
+        public void DeregisterInteractable(NVRInteractable interactable, bool full = true)
         {
-            if (CurrentlyInteracting == interactable)
+            if (CurrentlyInteracting == interactable && full)
                 CurrentlyInteracting = null;
 
             if (CurrentlyHoveringOver != null && CurrentlyHoveringOver.ContainsKey(interactable))

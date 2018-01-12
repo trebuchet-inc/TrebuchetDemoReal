@@ -3,122 +3,114 @@ using System.Collections.Generic;
 using UnityEngine;
 using System;
 using NewtonVR;
+using UnityEngine.Events;
 
 public class NVRConstrainedItem : NVRInteractable {
 	public bool rotationLock;
 	public bool movementLock;
+	public bool blockMirorMovement = false;
+	public Vector3 motor;
 
 	Transform _origin;
 	Vector3 _originPosition;
 	Quaternion _originRotation;
 	Vector3 _originLocalPosition;
 	Vector3 _attachementPoint;
-
 	Joint _joint;
 
 	protected override void Start () 
 	{
 		base.Start();
 		_origin = transform.Find("Origin");
+		if(_origin == null)
+		{
+			_origin = new GameObject(string.Format("Origin", this.gameObject.name)).transform; 
+			_origin.parent = this.transform;
+		} 
 		_joint = GetComponent<Joint>();
-		setJoint();
-	}
-
-	public void setJoint()
-	{
-		_originPosition = transform.position;
-		_originRotation = transform.rotation;
-		_originLocalPosition = transform.localPosition;
-
-		_joint.connectedAnchor = transform.position;
-
-		rigidbody.centerOfMass = _originLocalPosition;
 	}
 
 	protected override void Update()
 	{
-		if(!movementLock)
+		base.Update();
+
+		if(!rotationLock && !IsAttached && motor.magnitude != 0)
 		{
-			Vector3 velocity = rigidbody.velocity;
-			ConstrainPosition((ConfigurableJoint)_joint, velocity, out velocity);
-			rigidbody.velocity = velocity;
+			rigidbody.AddRelativeTorque(motor * Time.deltaTime, ForceMode.VelocityChange);
 		}
+	}
+
+	public void setJoint(Vector3 pos, Quaternion rot, Vector3 localPos)
+	{
+		_originPosition = pos;
+		_originRotation = rot;
+		_originLocalPosition = localPos;
+
+		if(_joint == null) _joint = GetComponent<Joint>();
+		_joint.connectedAnchor = pos;
+
+		rigidbody.centerOfMass = _originLocalPosition;
 	}
 	
 	public override void InteractingUpdate(NVRHand hand)
 	{
 		base.InteractingUpdate(hand);
-		_origin.position = _originPosition;
-		_origin.rotation = _originRotation;
-		Vector3 LocalHandPos = _origin.InverseTransformPoint(hand.transform.position) - _attachementPoint;
-		Vector3 forward = hand.transform.position - transform.position;
-		SetVelocity(Quaternion.LookRotation(forward).eulerAngles, LocalHandPos);
+		SetVelocity(hand);
 	}
 
 	public override void BeginInteraction(NVRHand hand)
 	{
 		base.BeginInteraction(hand);
-		_origin.position = transform.position;
-		_origin.rotation = _originRotation;
-		_attachementPoint = _origin.InverseTransformPoint(hand.transform.position);
+		if(!movementLock)
+		{
+			_origin.position = transform.position;
+			_origin.rotation = _originRotation;
+			_attachementPoint = _origin.InverseTransformPoint(hand.transform.position);
+		}
 	}
 
 	public override void EndInteraction(NVRHand hand)
-	{ 
+	{
 		base.EndInteraction(hand);
 	}
 
-	void SetVelocity(Vector3 targetRot, Vector3 targetPos)
+	public override void HoveringUpdate(NVRHand hand, float forTime)
+	{ 
+		base.HoveringUpdate(hand, forTime);
+		OnHovering.Invoke();
+	}
+
+	void SetVelocity(NVRHand hand)
 	{
+		_origin.position = _originPosition;
+		_origin.rotation = _originRotation;
+		
 		if(!movementLock)
 		{
-			ConfigurableJoint _confJoint = _joint as ConfigurableJoint;
-			Vector3 velocity = (targetPos - transform.localPosition) * Time.deltaTime * 1000;
-
-			ConstrainPosition(_confJoint, velocity, out velocity);
-			rigidbody.velocity = new Vector3(_confJoint.xMotion != ConfigurableJointMotion.Locked ? velocity.x : 0,
-											_confJoint.yMotion != ConfigurableJointMotion.Locked ? velocity.y : 0,
-											_confJoint.zMotion != ConfigurableJointMotion.Locked ? velocity.z : 0);
+			Vector3 velocity = _origin.InverseTransformPoint(hand.transform.position) - _attachementPoint;
+			velocity = (velocity - transform.localPosition) * 10;
+			rigidbody.velocity = transform.TransformVector(velocity);
 		} 
 
 		if(!rotationLock)
 		{
-			Vector3 torque = targetRot - transform.eulerAngles;
+			Vector3 forward = hand.transform.position - transform.position;
+			Vector3 localHand = _origin.InverseTransformPoint(hand.transform.position);
+			Vector3 torque = Quaternion.LookRotation(forward, transform.up).eulerAngles - transform.eulerAngles;
+			if(blockMirorMovement && localHand.z < 0)
+			{
+				torque.x = torque.x >= 0 ? -torque.x : torque.x; 
+			} 
 
 			torque.x = Math.Abs(torque.x) > 180 ? torque.x - 360 * Math.Sign(torque.x) : torque.x;
 			torque.y = Math.Abs(torque.y) > 180 ? torque.y - 360 * Math.Sign(torque.y) : torque.y;
 			torque.z = Math.Abs(torque.z) > 180 ? torque.z - 360 * Math.Sign(torque.z) : torque.z;
-			torque *= Time.deltaTime * 100;
+			torque = new Vector3(_joint.axis.x != 0 ? torque.x : 0,
+			 					_joint.axis.y != 0 ? torque.y : 0,
+			 					_joint.axis.z != 0 ? torque.z : 0);
+			torque *= Mathf.Deg2Rad * 100;
 
-			rigidbody.angularVelocity = new Vector3(_joint.axis.x != 0 ? torque.x : 0,
-													_joint.axis.y != 0 ? torque.y : 0,
-													_joint.axis.z != 0 ? torque.z : 0);
+			rigidbody.angularVelocity = transform.TransformVector(torque);
 		}
-	}
-
-	void ConstrainPosition(ConfigurableJoint confJoint, Vector3 velocity, out Vector3 newVelocity)
-	{
-		Vector3 pos = transform.localPosition;
-		newVelocity = velocity;
-
-		if(confJoint.xMotion != ConfigurableJointMotion.Locked && pos.x < _originLocalPosition.x)
-		{
-			pos.x = _originLocalPosition.x;
-			newVelocity.x = 0;
-		}
-
-		if(confJoint.yMotion != ConfigurableJointMotion.Locked && pos.y < _originLocalPosition.z)
-		{
-			pos.y = _originLocalPosition.y;
-			newVelocity.y = 0;
-		}
-
-		if(confJoint.zMotion != ConfigurableJointMotion.Locked && pos.z < _originLocalPosition.z)
-		{
-			pos.z = _originLocalPosition.z;
-			newVelocity.z = 0;
-		}
-
-		transform.localPosition = pos;
 	}
 }

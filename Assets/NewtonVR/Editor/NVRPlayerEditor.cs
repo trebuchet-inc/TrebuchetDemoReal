@@ -29,6 +29,7 @@ namespace NewtonVR
     {
         private const string SteamVRDefine = "NVR_SteamVR";
         private const string OculusDefine = "NVR_Oculus";
+        private const string WinMRDefine = "NVR_WindowsMR";
 
         private static bool hasReloaded = false;
         private static bool waitingForReload = false;
@@ -36,8 +37,10 @@ namespace NewtonVR
 
         private static bool hasOculusSDK = false;
         private static bool hasSteamVR = false;
+        private static bool hasWinMR = false;
         private static bool hasOculusSDKDefine = false;
         private static bool hasSteamVRDefine = false;
+        private static bool hasWinMRDefine = false;
 
         private static string progressBarMessage = null;
 
@@ -52,10 +55,17 @@ namespace NewtonVR
 
             hasSteamVR = DoesTypeExist("SteamVR");
 
+#if UNITY_2017_2_OR_NEWER          
+            hasWinMR = true;
+#else
+            hasWinMR = false;
+#endif
+
             string scriptingDefine = PlayerSettings.GetScriptingDefineSymbolsForGroup(BuildTargetGroup.Standalone);
             string[] scriptingDefines = scriptingDefine.Split(';');
             hasOculusSDKDefine = scriptingDefines.Contains(OculusDefine);
             hasSteamVRDefine = scriptingDefines.Contains(SteamVRDefine);
+            hasWinMRDefine = scriptingDefines.Contains(WinMRDefine);
 
             waitingForReload = false;
             ClearProgressBar();
@@ -181,11 +191,14 @@ namespace NewtonVR
 
             player.OculusSDKEnabled = hasOculusSDKDefine;
             player.SteamVREnabled = hasSteamVRDefine;
+            player.WindowsMREnabled = hasWinMRDefine;
 
             bool installSteamVR = false;
             bool installOculusSDK = false;
+            bool installWinMR = false;
             bool enableSteamVR = player.SteamVREnabled;
             bool enableOculusSDK = player.OculusSDKEnabled;
+            bool enableWinMR = player.WindowsMREnabled;
             
             EditorGUILayout.BeginHorizontal();
             if (hasSteamVR == false)
@@ -199,6 +212,21 @@ namespace NewtonVR
             else
             {
                 enableSteamVR = EditorGUILayout.Toggle("Enable SteamVR", player.SteamVREnabled);
+            }
+            EditorGUILayout.EndHorizontal();
+
+            EditorGUILayout.BeginHorizontal();
+            if (hasWinMR == false)
+            {
+                using (new EditorGUI.DisabledScope(hasWinMR == false))
+                {
+                    EditorGUILayout.Toggle("Enable Windows MR", player.WindowsMREnabled);
+                }
+                installWinMR = GUILayout.Button("Install unity 2017.2 or higher");
+            }
+            else
+            {
+                enableWinMR = EditorGUILayout.Toggle("Enable Windows MR", player.WindowsMREnabled);
             }
             EditorGUILayout.EndHorizontal();
             
@@ -284,6 +312,42 @@ namespace NewtonVR
                 }
             }
 
+            if (player.WindowsMREnabled == true)
+            {
+                GUILayout.Label("Model override for Windows MR");
+                using (new EditorGUI.DisabledScope(hasWinMR == false))
+                {
+                    bool modelOverrideWinMR = EditorGUILayout.Toggle("Override hand models for Windows MR", player.OverrideWinMR);
+                    EditorGUILayout.BeginFadeGroup(Convert.ToSingle(modelOverrideWinMR));
+                    using (new EditorGUI.DisabledScope(modelOverrideWinMR == false))
+                    {
+                        player.OverrideWinMRLeftHand = (GameObject)EditorGUILayout.ObjectField("Left Hand", player.OverrideWinMRLeftHand, typeof(GameObject), false);
+                        GUILayout.BeginHorizontal();
+                        GUILayout.Space(20);
+                        player.OverrideWinMRLeftHandPhysicalColliders = (GameObject)EditorGUILayout.ObjectField("Left Hand Physical Colliders", player.OverrideWinMRLeftHandPhysicalColliders, typeof(GameObject), false);
+                        GUILayout.EndHorizontal();
+                        player.OverrideWinMRRightHand = (GameObject)EditorGUILayout.ObjectField("Right Hand", player.OverrideWinMRRightHand, typeof(GameObject), false);
+                        GUILayout.BeginHorizontal();
+                        GUILayout.Space(20);
+                        player.OverrideWinMRRightHandPhysicalColliders = (GameObject)EditorGUILayout.ObjectField("Right Hand Physical Colliders", player.OverrideWinMRRightHandPhysicalColliders, typeof(GameObject), false);
+                        GUILayout.EndHorizontal();
+                    }
+                    EditorGUILayout.EndFadeGroup();
+
+                    if (modelOverrideWinMR == true)
+                    {
+                        player.OverrideAll = false;
+                    }
+                    if (player.OverrideWinMR != modelOverrideWinMR)
+                    {
+                        EditorUtility.SetDirty(target);
+                        player.OverrideWinMR = modelOverrideWinMR;
+                    }
+                }
+
+                GUILayout.Space(10);
+            }
+
             if (player.SteamVREnabled == true)
             {
                 GUILayout.Label("Model override for SteamVR");
@@ -335,6 +399,15 @@ namespace NewtonVR
                 AddDefine(SteamVRDefine);
             }
 
+            if (enableWinMR == false && player.WindowsMREnabled == true)
+            {
+                RemoveDefine(WinMRDefine);
+            }
+            else if (enableWinMR == true && player.WindowsMREnabled == false)
+            {
+                AddDefine(WinMRDefine);
+            }
+
             
             if (enableOculusSDK == false && player.OculusSDKEnabled == true)
             {
@@ -345,9 +418,14 @@ namespace NewtonVR
                 AddDefine(OculusDefine);
             }
 
+            if (installWinMR == true)
+            {
+                Application.OpenURL("https://unity3d.com/get-unity/download?ref=professional");
+            }
+
             if (installOculusSDK == true)
             {
-                Application.OpenURL("https://developer.oculus.com/downloads/package/oculus-utilities-for-unity-5/");
+                Application.OpenURL("https://developer3.oculus.com/downloads/game-engines/1.10.0/Oculus_Utilities_for_Unity_5/");
             }
 
             if (installSteamVR == true)

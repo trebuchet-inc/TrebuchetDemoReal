@@ -1,5 +1,4 @@
 ﻿using UnityEngine;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine.VR;
 using System.Linq;
@@ -9,7 +8,7 @@ namespace NewtonVR
 {
     public class NVRPlayer : MonoBehaviour
     {
-        public const decimal NewtonVRVersion = 1.24m;
+        public const decimal NewtonVRVersion = 1.191m;
         public const float NewtonVRExpectedDeltaTime = 0.0111f;
 
         public static List<NVRPlayer> Instances = new List<NVRPlayer>();
@@ -25,6 +24,8 @@ namespace NewtonVR
         public bool SteamVREnabled = false;
         [HideInInspector]
         public bool OculusSDKEnabled = false;
+        [HideInInspector]
+        public bool WindowsMREnabled = false;
 
         public InterationStyle InteractionStyle;
         public bool PhysicalHands = true;
@@ -60,6 +61,20 @@ namespace NewtonVR
                 }
                 else
                 {
+
+                    if (WindowsMREnabled == true)
+                    {
+                        Integration = new NVRWindowsMRIntegration();
+                        if (Integration.IsHmdPresent() == true)
+                        {
+                            return Integration.GetPlayspaceBounds();
+                        }
+                        else
+                        {
+                            Integration = null;
+                        }
+                    }
+
                     if (OculusSDKEnabled == true)
                     {
                         Integration = new NVROculusIntegration();
@@ -126,6 +141,17 @@ namespace NewtonVR
         [HideInInspector]
         public GameObject OverrideOculusRightHandPhysicalColliders;
 
+        [HideInInspector]
+        public bool OverrideWinMR;
+        [HideInInspector]
+        public GameObject OverrideWinMRLeftHand;
+        [HideInInspector]
+        public GameObject OverrideWinMRLeftHandPhysicalColliders;
+        [HideInInspector]
+        public GameObject OverrideWinMRRightHand;
+        [HideInInspector]
+        public GameObject OverrideWinMRRightHandPhysicalColliders;
+
         [Space]
 
         public NVRHead Head;
@@ -137,8 +163,9 @@ namespace NewtonVR
 
         [HideInInspector]
         public NVRSDKIntegrations CurrentIntegrationType = NVRSDKIntegrations.None;
-
-        private NVRIntegration Integration;
+        
+        [HideInInspector]
+        public NVRIntegration Integration;
 
         private Dictionary<Collider, NVRHand> ColliderToHandMapping;
 
@@ -202,7 +229,11 @@ namespace NewtonVR
         {
             CurrentIntegrationType = DetermineCurrentIntegration(logOutput);
 
-            if (CurrentIntegrationType == NVRSDKIntegrations.Oculus)
+            if (CurrentIntegrationType == NVRSDKIntegrations.WindowsMR)
+            {
+                Integration = new NVRWindowsMRIntegration();
+            }
+            else if (CurrentIntegrationType == NVRSDKIntegrations.Oculus)
             {
                 Integration = new NVROculusIntegration();
             }
@@ -233,17 +264,25 @@ namespace NewtonVR
             NVRSDKIntegrations currentIntegration = NVRSDKIntegrations.None;
             string resultLog = "[NewtonVR] Version : " + NewtonVRVersion + ". ";
 
-            if (VRDevice.isPresent == true)
+            if (UnityEngine.XR.XRDevice.isPresent == true)
             {
-                resultLog += "Found VRDevice: " + VRDevice.model + ". ";
+                resultLog += "Found VRDevice: " + UnityEngine.XR.XRDevice.model + ". ";
 
-#if !NVR_Oculus && !NVR_SteamVR
+#if !NVR_Oculus && !NVR_SteamVR && !NVR_WindowsMR
                 string warning = "Neither SteamVR or Oculus SDK is enabled in the NVRPlayer. Please check the \"Enable SteamVR\" or \"Enable Oculus SDK\" checkbox in the NVRPlayer script in the NVRPlayer GameObject.";
                 Debug.LogWarning(warning);
 #endif
 
+#if NVR_WindowsMR
+                if (UnityEngine.XR.XRDevice.model.Contains("Windows"))
+                {
+                    currentIntegration = NVRSDKIntegrations.WindowsMR;
+                    resultLog += "Using Windows MR";
+                }
+#endif
+
 #if NVR_Oculus
-                if (VRDevice.model.IndexOf("oculus", System.StringComparison.CurrentCultureIgnoreCase) != -1)
+                if (UnityEngine.XR.XRDevice.model.IndexOf("oculus", System.StringComparison.CurrentCultureIgnoreCase) != -1)
                 {
                     currentIntegration = NVRSDKIntegrations.Oculus;
                     resultLog += "Using Oculus SDK";
@@ -297,7 +336,7 @@ namespace NewtonVR
             return ColliderToHandMapping[collider];
         }
 
-        public static void DeregisterInteractable(NVRInteractable interactable)
+        public static void DeregisterInteractable(NVRInteractable interactable, bool full = true)
         {
             for (int instanceIndex = 0; instanceIndex < Instances.Count; instanceIndex++)
             {
@@ -307,7 +346,7 @@ namespace NewtonVR
                     {
                         if (Instances[instanceIndex].Hands[index] != null)
                         {
-                            Instances[instanceIndex].Hands[index].DeregisterInteractable(interactable);
+                            Instances[instanceIndex].Hands[index].DeregisterInteractable(interactable, full);
                         }
                     }
                 }
